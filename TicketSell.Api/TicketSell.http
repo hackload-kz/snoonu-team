@@ -1,0 +1,6 @@
+@TicketSell_HostAddress = http://localhost:5114
+
+GET {{TicketSell_HostAddress}}/
+Accept: application/json
+
+###
