@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using TicketSell.Api.Domain.Models;
 using TicketSell.Api.Models;
 using TicketSell.Api.Models.Requests;
 using TicketSell.Api.Models.Responses;

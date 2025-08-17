@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using TicketSell.Api.Domain.Models;
 
 namespace TicketSell.Api.Models.Responses;
 

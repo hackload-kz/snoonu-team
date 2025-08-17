@@ -1,4 +1,4 @@
-namespace TicketSell.Api.Models;
+namespace TicketSell.Api.Domain.Models;
 
 public enum SeatStatusEnum
 {
