@@ -10,7 +10,7 @@ public class EventsController : ControllerBase
     [HttpGet]
     public ActionResult<IEnumerable<ListEventsResponseItem>> ListEvents(
         [FromQuery] string? query,
-        [FromQuery] DateTime? date,
+        [FromQuery] DateTimeOffset? date,
         [FromQuery] int? page,
         [FromQuery] int? pageSize)
     {

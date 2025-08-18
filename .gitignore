@@ -5,3 +5,5 @@ obj/
 riderModule.iml
 /_ReSharper.Caches/
 appsettings.Local.json
+/TicketSell.sln.DotSettings.user
+/TicketSell.Api/appsettings.Remote.json

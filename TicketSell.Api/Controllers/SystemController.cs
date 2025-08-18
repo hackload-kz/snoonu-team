@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using TicketSell.Api.Infrastructure;
 
 namespace TicketSell.Api.Controllers;
 
@@ -7,8 +8,9 @@ namespace TicketSell.Api.Controllers;
 public class SystemController : ControllerBase
 {
     [HttpPost("reset")]
-    public IActionResult ResetDatabase()
+    public IActionResult ResetDatabase(ITicketSellRepository ticketSellRepository)
     {
+        ticketSellRepository.ResetDatabase();
         return Ok();
     }
 }
