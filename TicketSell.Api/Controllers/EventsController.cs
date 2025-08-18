@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TicketSell.Api.Models.Responses;
 
@@ -7,6 +8,7 @@ namespace TicketSell.Api.Controllers;
 [Route("api/[controller]")]
 public class EventsController : ControllerBase
 {
+    [AllowAnonymous]
     [HttpGet]
     public ActionResult<IEnumerable<ListEventsResponseItem>> ListEvents(
         [FromQuery] string? query,
