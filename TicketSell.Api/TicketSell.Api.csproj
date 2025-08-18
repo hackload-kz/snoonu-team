@@ -21,9 +21,9 @@
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Resource>
       <None Remove="Infrastructure\DatabaseData\users.csv" />
-      <Resource Include="Infrastructure\DatabaseData\users.csv">
+      <Content Include="Infrastructure\DatabaseData\users.csv">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Resource>
+      </Content>
     </ItemGroup>
 
     <ItemGroup>

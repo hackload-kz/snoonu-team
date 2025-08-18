@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TicketSell.Api.Application.Services;
 using TicketSell.Api.Infrastructure;
+using TicketSell.Api.Infrastructure.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +34,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseMiddleware<BasicAuthMiddleware>();
 app.MapControllers();
 app.Run();
 
