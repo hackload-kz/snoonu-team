@@ -1,0 +1,89 @@
+@TicketSell_HostAddress = http://localhost:5114
+
+### Events
+# Получить список событий
+GET {{TicketSell_HostAddress}}/api/events?query=concert&date=2025-08-20&page=1&pageSize=5
+Accept: application/json
+
+### Bookings
+### Создать бронирование
+POST {{TicketSell_HostAddress}}/api/bookings
+Content-Type: application/json
+Accept: application/json
+
+{
+  "event_id": 1
+}
+
+### Получить список бронирований
+GET {{TicketSell_HostAddress}}/api/bookings
+Accept: application/json
+
+### Инициировать платеж
+PATCH {{TicketSell_HostAddress}}/api/bookings/initiatePayment
+Content-Type: application/json
+
+{
+  "booking_id": 1
+}
+
+### Отменить бронирование
+PATCH {{TicketSell_HostAddress}}/api/bookings/cancel
+Content-Type: application/json
+
+{
+  "booking_id": 1
+}
+
+### Seats
+### Получить список мест
+GET {{TicketSell_HostAddress}}/api/seats?event_id=1&page=1&pageSize=10&status=FREE
+Accept: application/json
+
+### Выбрать место
+PATCH {{TicketSell_HostAddress}}/api/seats/select
+Content-Type: application/json
+
+{
+  "booking_id": 1,
+  "seat_id": 101
+}
+
+### Освободить место
+PATCH {{TicketSell_HostAddress}}/api/seats/release
+Content-Type: application/json
+
+{
+  "seat_id": 101
+}
+
+### Payments
+### Уведомить об успешной оплате
+GET {{TicketSell_HostAddress}}/api/payments/success?orderId=1
+
+### Уведомить о неудачной оплате
+GET {{TicketSell_HostAddress}}/api/payments/fail?orderId=1
+
+### Принимать уведомление от платежного шлюза
+POST {{TicketSell_HostAddress}}/api/payments/notifications
+Content-Type: application/json
+
+{
+  "paymentId": "pay_123",
+  "status": "SUCCESS",
+  "teamSlug": "team1",
+  "timestamp": "2025-08-17T12:00:00Z",
+  "data": {}
+}
+
+### Analytics
+### Получить аналитику по событию
+GET {{TicketSell_HostAddress}}/api/analytics?id=1
+Accept: application/json
+
+### System
+# Сбросить базу данных
+POST {{TicketSell_HostAddress}}/api/reset
+
+
+###
