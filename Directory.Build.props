@@ -5,5 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <RootNamespace>TicketSell.Api</RootNamespace>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <ServerGarbageCollection>true</ServerGarbageCollection>
+        <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
     </PropertyGroup>
 </Project>
