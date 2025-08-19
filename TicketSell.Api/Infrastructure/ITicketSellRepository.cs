@@ -15,6 +15,16 @@ public interface ITicketSellRepository
         int? page,
         int? pageSize,
         CancellationToken cancellationToken);
+
+    Task<List<Booking>> GetBookings(long customerId);
+
+    Task<Booking> GetBooking(long customerId, long bookingId);
+
+    Task<long> AddBooking(long customerId, long eventId);
+
+    Task<Booking> InitiatePayment(long customerId, long bookingId);
+
+    Task CancelPayment(long customerId, long bookingId);
 }
 
 public class TicketSellRepositoryEntityFramework(
@@ -55,5 +65,45 @@ public class TicketSellRepositoryEntityFramework(
         eventsQuery = eventsQuery.Take(pageSize.Value);
 
         return await eventsQuery.ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<Booking>> GetBookings(long customerId)
+    {
+        return await dbContext.Bookings.Where(x => x.UserId == customerId).ToListAsync();
+    }
+
+    public async Task<Booking> GetBooking(long customerId, long bookingId)
+    {
+        return await dbContext.Bookings.Where(x => x.Id == bookingId && x.UserId == customerId).FirstAsync();
+
+    }
+
+    public async Task<long> AddBooking(long customerId, long eventId)
+    {
+        var trackedBooking = await dbContext.Bookings.AddAsync(new Booking
+        {
+            EventId = eventId,
+            UserId = customerId
+        });
+
+        await dbContext.SaveChangesAsync();
+
+        return trackedBooking.Entity.Id;
+    }
+
+    public async Task<Booking> InitiatePayment(long customerId, long bookingId)
+    {
+       var booking = await dbContext.Bookings.Where(x => x.Id == bookingId && x.UserId == customerId).FirstAsync();
+       booking.Status = BookingStatus.PaymentInitiated;
+       await dbContext.SaveChangesAsync();
+
+       return booking;
+    }
+
+    public async Task CancelPayment(long customerId, long bookingId)
+    {
+        var booking = await dbContext.Bookings.Where(x => x.Id == bookingId && x.UserId == customerId).FirstAsync();
+        booking.Status = BookingStatus.Cancelled;
+        await dbContext.SaveChangesAsync();
     }
 }

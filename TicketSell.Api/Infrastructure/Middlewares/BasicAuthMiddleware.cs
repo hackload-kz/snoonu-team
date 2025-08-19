@@ -10,6 +10,7 @@ public class BasicAuthMiddleware(
 {
     private const string AuthorizationHeader = "Authorization";
     private const string BasicAuthScheme = "Basic";
+    public const string UserDataKey = "UserData";
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -64,6 +65,7 @@ public class BasicAuthMiddleware(
     {
         var userProvider = context.RequestServices.GetRequiredService<IUserProvider>();
         var user = await userProvider.GetUser(username, password, CancellationToken.None);
+        context.Items[UserDataKey] = user;
         return user is not null;
     }
 }

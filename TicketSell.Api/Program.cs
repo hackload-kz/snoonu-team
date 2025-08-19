@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using TicketSell.Api.Application.Services;
 using TicketSell.Api.Infrastructure;
 using TicketSell.Api.Infrastructure.Middlewares;
+using TicketSell.Api.Infrastructure.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +20,7 @@ builder.Services.AddDbContext<AppDbContext>(
         opt.UseNpgsql(builder.Configuration.GetConnectionString("TicketSellDb")));
 builder.Services.AddScoped<ITicketSellRepository, TicketSellRepositoryEntityFramework>();
 builder.Services.AddScoped<DatabaseInitializer>();
-
+builder.Services.AddOptions<TicketSellSettings>(nameof(TicketSellSettings));
 
 // Application part
 builder.Services.AddScoped<IUserProvider, UserProvider>();
