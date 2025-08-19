@@ -25,6 +25,10 @@ public interface ITicketSellRepository
     Task<Booking> InitiatePayment(long customerId, long bookingId);
 
     Task CancelPayment(long customerId, long bookingId);
+
+    Task ApprovePayment(long bookingId);
+
+    Task CancelPayment(long bookingId);
 }
 
 public class TicketSellRepositoryEntityFramework(
@@ -103,6 +107,20 @@ public class TicketSellRepositoryEntityFramework(
     public async Task CancelPayment(long customerId, long bookingId)
     {
         var booking = await dbContext.Bookings.Where(x => x.Id == bookingId && x.UserId == customerId).FirstAsync();
+        booking.Status = BookingStatus.Cancelled;
+        await dbContext.SaveChangesAsync();
+    }
+
+    public async Task ApprovePayment(long bookingId)
+    {
+        var booking = await dbContext.Bookings.Where(x => x.Id == bookingId).FirstAsync();
+        booking.Status = BookingStatus.PaymentCompleted;
+        await dbContext.SaveChangesAsync();
+    }
+
+    public async Task CancelPayment(long bookingId)
+    {
+        var booking = await dbContext.Bookings.Where(x => x.Id == bookingId).FirstAsync();
         booking.Status = BookingStatus.Cancelled;
         await dbContext.SaveChangesAsync();
     }
