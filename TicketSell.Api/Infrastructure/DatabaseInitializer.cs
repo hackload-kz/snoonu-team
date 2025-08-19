@@ -24,13 +24,17 @@ public class DatabaseInitializer(
 
     public async Task LoadEvents(CancellationToken cancellationToken)
     {
-        if (dbContext.Events.Any())
+        await LoadEventsInternal(Path.Combine(environment.ContentRootPath, "Infrastructure/DatabaseData/events.json"), 1, cancellationToken);
+        await LoadEventsInternal(Path.Combine(environment.ContentRootPath, "Infrastructure/DatabaseData/events_archive.json"), 100000, cancellationToken);
+    }
+
+    private async Task LoadEventsInternal(string jsonPath, long minId, CancellationToken cancellationToken)
+    {
+        if (dbContext.Events.Any(x => x.Id >= minId))
         {
             logger.LogWarning("Events are already loaded. Skipped loading events from file");
             return;
         }
-
-        var jsonPath = Path.Combine(environment.ContentRootPath, "Infrastructure/DatabaseData/events.json");
 
         if (!File.Exists(jsonPath))
         {
