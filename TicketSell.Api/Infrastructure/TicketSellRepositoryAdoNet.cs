@@ -6,19 +6,18 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Data.SqlClient;
-
+using Npgsql;
 
 public class TicketSellRepositoryAdoNet(string connectionString, DatabaseInitializer initializer)
     : ITicketSellRepository
 {
     public async Task ResetDatabase()
     {
-        using var conn = new SqlConnection(connectionString);
+        await using var conn = new NpgsqlConnection(connectionString);
         await conn.OpenAsync();
 
         var cmd = conn.CreateCommand();
-        cmd.CommandText = "DELETE FROM Bookings; DELETE FROM Seats; DELETE FROM Events;";
+        cmd.CommandText = "DELETE FROM \"Bookings\"; DELETE FROM \"Seats\"; DELETE FROM \"Events\";";
         await cmd.ExecuteNonQueryAsync();
 
         await initializer.LoadEvents(CancellationToken.None);
@@ -30,21 +29,24 @@ public class TicketSellRepositoryAdoNet(string connectionString, DatabaseInitial
         pageSize ??= 20;
 
         var events = new List<Event>();
-        using var conn = new SqlConnection(connectionString);
+        await using var conn = new NpgsqlConnection(connectionString);
         await conn.OpenAsync(cancellationToken);
 
-        var sql = @"SELECT Id, Title, Description, Type, Provider, StartAt
-                    FROM Events WHERE 1=1";
+        var sql = """
+                  SELECT "Id", "Title", "Description", "Type", "Provider", "StartAt"
+                  FROM "Events"
+                  WHERE 1=1
+                  """;
 
         if (date is not null)
-            sql += " AND CAST(StartAt as date) = @date";
+            sql += " AND CAST(\"StartAt\" AS date) = @date";
 
         if (!string.IsNullOrEmpty(query))
-            sql += " AND (Title LIKE @q OR Description LIKE @q OR Type LIKE @q OR Provider LIKE @q)";
+            sql += " AND (\"Title\" ILIKE @q OR \"Description\" ILIKE @q OR \"Type\" ILIKE @q OR \"Provider\" ILIKE @q)";
 
-        sql += " ORDER BY StartAt OFFSET @skip ROWS FETCH NEXT @take ROWS ONLY";
+        sql += " ORDER BY \"StartAt\" OFFSET @skip LIMIT @take";
 
-        using var cmd = new SqlCommand(sql, conn);
+        await using var cmd = new NpgsqlCommand(sql, conn);
         if (date is not null)
             cmd.Parameters.AddWithValue("@date", date.Value.UtcDateTime.Date);
         if (!string.IsNullOrEmpty(query))
@@ -53,7 +55,7 @@ public class TicketSellRepositoryAdoNet(string connectionString, DatabaseInitial
         cmd.Parameters.AddWithValue("@skip", (page.Value - 1) * pageSize.Value);
         cmd.Parameters.AddWithValue("@take", pageSize.Value);
 
-        using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
         {
             events.Add(new Event
@@ -73,13 +75,13 @@ public class TicketSellRepositoryAdoNet(string connectionString, DatabaseInitial
     public async Task<List<Booking>> GetBookings(long customerId)
     {
         var bookings = new List<Booking>();
-        using var conn = new SqlConnection(connectionString);
+        await using var conn = new NpgsqlConnection(connectionString);
         await conn.OpenAsync();
 
-        using var cmd = new SqlCommand("SELECT Id, EventId, UserId, Status FROM Bookings WHERE UserId=@uid", conn);
+        await using var cmd = new NpgsqlCommand("SELECT \"Id\", \"EventId\", \"UserId\", \"Status\" FROM \"Bookings\" WHERE \"UserId\"=@uid", conn);
         cmd.Parameters.AddWithValue("@uid", customerId);
 
-        using var reader = await cmd.ExecuteReaderAsync();
+        await using var reader = await cmd.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
             bookings.Add(new Booking
@@ -96,14 +98,14 @@ public class TicketSellRepositoryAdoNet(string connectionString, DatabaseInitial
 
     public async Task<Booking> GetBooking(long customerId, long bookingId)
     {
-        using var conn = new SqlConnection(connectionString);
+        await using var conn = new NpgsqlConnection(connectionString);
         await conn.OpenAsync();
 
-        using var cmd = new SqlCommand("SELECT Id, EventId, UserId, Status FROM Bookings WHERE Id=@bid AND UserId=@uid", conn);
+        await using var cmd = new NpgsqlCommand("SELECT \"Id\", \"EventId\", \"UserId\", \"Status\" FROM \"Bookings\" WHERE \"Id\"=@bid AND \"UserId\"=@uid", conn);
         cmd.Parameters.AddWithValue("@bid", bookingId);
         cmd.Parameters.AddWithValue("@uid", customerId);
 
-        using var reader = await cmd.ExecuteReaderAsync();
+        await using var reader = await cmd.ExecuteReaderAsync();
         if (!await reader.ReadAsync()) throw new Exception("Booking not found");
 
         return new Booking
@@ -117,17 +119,22 @@ public class TicketSellRepositoryAdoNet(string connectionString, DatabaseInitial
 
     public async Task<long> AddBooking(long customerId, long eventId)
     {
-        using var conn = new SqlConnection(connectionString);
+        await using var conn = new NpgsqlConnection(connectionString);
         await conn.OpenAsync();
 
-        using var cmd = new SqlCommand(@"INSERT INTO Bookings (EventId, UserId, Status)
-                                        VALUES (@eid, @uid, @status);
-                                        SELECT CAST(SCOPE_IDENTITY() as bigint);", conn);
+        var sql = """
+                  INSERT INTO "Bookings" ("EventId", "UserId", "Status")
+                  VALUES (@eid, @uid, @status)
+                  RETURNING "Id";
+                  """;
+
+
+        await using var cmd = new NpgsqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@eid", eventId);
         cmd.Parameters.AddWithValue("@uid", customerId);
         cmd.Parameters.AddWithValue("@status", (int)BookingStatus.Created);
 
-        var id = (long)await cmd.ExecuteScalarAsync();
+        var id = (long)(await cmd.ExecuteScalarAsync() ?? 0);
         return id;
     }
 
@@ -153,22 +160,22 @@ public class TicketSellRepositoryAdoNet(string connectionString, DatabaseInitial
 
     private async Task<Booking> UpdateStatus(long? customerId, long bookingId, BookingStatus status)
     {
-        using var conn = new SqlConnection(connectionString);
+        await using var conn = new NpgsqlConnection(connectionString);
         await conn.OpenAsync();
 
-        var sql = "UPDATE Bookings SET Status=@status WHERE Id=@bid";
+        var sql = "UPDATE \"Bookings\" SET \"Status\"=@status WHERE \"Id\"=@bid";
         if (customerId != null)
-            sql += " AND UserId=@uid";
+            sql += " AND \"UserId\"=@uid";
 
-        sql += "; SELECT Id, EventId, UserId, Status FROM Bookings WHERE Id=@bid";
+        sql += "; SELECT \"Id\", \"EventId\", \"UserId\", \"Status\" FROM \"Bookings\" WHERE \"Id\"=@bid";
 
-        using var cmd = new SqlCommand(sql, conn);
+        await using var cmd = new NpgsqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@status", (int)status);
         cmd.Parameters.AddWithValue("@bid", bookingId);
         if (customerId != null)
             cmd.Parameters.AddWithValue("@uid", customerId);
 
-        using var reader = await cmd.ExecuteReaderAsync();
+        await using var reader = await cmd.ExecuteReaderAsync();
         if (!await reader.ReadAsync()) throw new Exception("Booking not found");
 
         return new Booking
