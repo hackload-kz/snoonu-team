@@ -18,7 +18,12 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<AppDbContext>(
     opt =>
         opt.UseNpgsql(builder.Configuration.GetConnectionString("TicketSellDb")));
-builder.Services.AddScoped<ITicketSellRepository, TicketSellRepositoryEntityFramework>();
+var connectionString = builder.Configuration.GetConnectionString("TicketSellDb");
+builder.Services.AddScoped<ITicketSellRepository>(sp =>
+{
+    var databaseInitializer = sp.GetRequiredService<DatabaseInitializer>();
+    return new TicketSellRepositoryAdoNet(connectionString!, databaseInitializer);
+});
 builder.Services.AddScoped<DatabaseInitializer>();
 builder.Services.AddOptions<TicketSellSettings>(nameof(TicketSellSettings));
 
